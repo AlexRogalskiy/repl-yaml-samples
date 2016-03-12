@@ -1,0 +1,80 @@
+---
+replicated_api_version: 1.3.2
+name: Migration Example
+version: "1"
+properties:
+  console_title: "Basic Python App"
+cmds:
+- name: generate_pw
+  cmd: random
+  args:
+  - "32"
+components:
+- name: db
+  containers:
+  - source: public
+    image_name: postgres
+    version: 9.5
+    env_vars:
+    - name: POSTGRES_DB
+      static_val: pythonapp
+    - name: POSTGRES_USER
+      static_val: 'pythonapp_user'
+    - name: POSTGRES_PASSWORD
+      static_val: '{{repl ConfigOption "postgres_pw" }}'
+    volumes:
+    - host_path: /data/postgresql/data
+      container_path: /var/lib/postgresql/data
+    ports:
+    - private_port: "5432"
+      public_port: "5432"
+      port_type: tcp
+    publish_events:
+    - name: Postgres started and waiting for connections
+      trigger: port-listen
+      data: "5432"
+      subscriptions:
+      - component: db-migration
+        container: pythonapp
+        action: start
+- name: db-migration
+  containers:
+  - source: replicated
+    image_name: pythonapp
+    version: 1.4.2
+    ephemeral: true
+    env_vars:
+      - name: DB_URL
+        static_val: "postgresql://pythonapp:{{repl ConfigOption \"postgres_pw\"}}@{{repl HostPrivateIpAddress \"db\" \"postgres\" }}:{{repl ContainerExposedPort \"db\" \"postgres\" \"5432\"}}/pythonapp"
+    cmd: '["python", "manage.py", "db", "upgrade"]'
+    publish_events:
+    - name: db migration complete
+      trigger: container-stop
+      data: ""
+      subscriptions:
+      - component: python-app
+        container: pythonapp
+        action: start
+- name: python-app
+  containers:
+  - source: replicated
+    image_name: pythonapp
+    version: 1.4.2
+    cmd: '["python", "manage.py", "app", "start"]'
+    env_vars:
+      - name: DB_URL
+        static_val: "postgresql://pythonapp:{{repl ConfigOption \"postgres_pw\"}}@{{repl HostPrivateIpAddress \"db\" \"postgres\" }}:{{repl ContainerExposedPort \"db\" \"postgres\" \"5432\"}}/pythonapp"
+config:
+- name: database
+  title: Database Settings
+  description: Setup your local postgres server
+  items:
+  - name: postgres_pw
+    title: Postgres Password
+    type: text
+    recommended: false
+    default: ""
+    value_cmd:
+      name: generate_pw
+      value_at: 0
+    required: true

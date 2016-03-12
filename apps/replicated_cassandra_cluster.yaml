@@ -1,0 +1,73 @@
+---
+replicated_api_version: 1.3.2
+name: Cassandra Cluster
+version: "1"
+properties:
+  app_url: http://{{repl ConfigOption "hostname" }}
+  console_title: "Cassandra Cluster Console"
+cmds:
+- name: host_ip
+  cmd: publicip
+components:
+- name: Cassandra
+  tags:
+  - cassandra
+  cluster: true
+  cluster_host_count:
+    min: 2
+    max: 3
+  containers:
+  - source: public
+    image_name: cassandra
+    display_name: cassandra
+    ephemeral: false
+    version: 2.1.12
+    restart:
+      policy: always
+    volumes:
+    - host_path: /opt/cassandra-data-volume/data
+      container_path: /var/lib/cassandra/data
+    - host_path: /opt/cassandra-data-volume/commitlog
+      container_path: /var/lib/cassandra/commitlog
+    - host_path: /var/log/testapp/cassandra
+      container_path: /var/log/cassandra
+    env_vars:
+    - name: CASSANDRA_BROADCAST_ADDRESS
+      static_val: "{{repl ThisHostPrivateIpAddress }}"
+    - name: CASSANDRA_SEEDS
+      static_val: '{{repl range $index, $host := HostPrivateIpAddressAll "Cassandra" "cassandra" }}{{repl if eq $index 1}},{{repl end}}{{repl if lt $index 2}}{{repl $host}}{{repl end}}{{repl end}}'
+    ports:
+    - private_port: "9042"
+      public_port: "9042"
+      port_type: tcp
+    - private_port: "7000"
+      public_port: "7000"
+      port_type: tcp
+    - private_port: "7001"
+      public_port: "7001"
+      port_type: tcp
+    - private_port: "7199"
+      public_port: "7199"
+      port_type: tcp
+    - private_port: "9160"
+      public_port: "9160"
+      port_type: tcp
+    support_files:
+    - filename: /var/log/cassandra/system.log
+config:
+- name: hostname
+  title: Hostname
+  description: Ensure this domain name is routable on your network. If you plan on connecting to the application using a private network, you most definitely need to change this parameter.
+  items:
+  - name: hostname
+    title: Hostname
+    type: text
+    value_cmd:
+      name: host_ip
+      value_at: 0
+    required: true
+monitors:
+      cpuacct:
+      - Cassandra,cassandra
+      memory:
+      - Cassandra,cassandra

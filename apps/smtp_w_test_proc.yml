@@ -1,0 +1,86 @@
+---
+replicated_api_version: 1.3.2
+name: SMTP Setup Sample
+version: "1"
+properties:
+  console_title: "SMTP setup"
+components: []
+config:
+- name: smtp_on
+  title: Email Server Settings
+  description: Configure your outgoing email server settings
+  items:
+  - name: smtp_enabled
+    default: smtp_enabled_no
+    type: select_one
+    items:
+    - name: smtp_enabled_yes
+      title: Enable SMTP
+      recommended: true
+      type: text
+    - name: smtp_enabled_no
+      title: Disable SMTP
+      type: text
+- name: smtp
+  test_proc:
+    display_name: Test SMTP Authentication
+    command: smtp_auth
+    arg_fields:
+    - smtp_host_address
+    - smtp_starttls
+    - smtp_auth_type
+    - smtp_username
+    - smtp_password
+  items:
+  - name: smtp_host_address
+    title: SMTP Server Address
+    default: smtp.gmail.com:587
+    help_text: "*please note you must include the port like so: `smtp.gmail.com:587`*"
+    when: smtp_enabled=smtp_enabled_yes
+    type: text
+    required: true
+  - name: smtp_username
+    title: SMTP Username
+    help_text: A valid user account to log in to your SMTP server
+    when: smtp_enabled=smtp_enabled_yes
+    type: text
+    affix: left
+  - name: smtp_password
+    title: SMTP Password
+    help_text: The password for the user
+    when: smtp_enabled=smtp_enabled_yes
+    type: password
+    affix: right
+  - name: smtp_from_address
+    title: From Address
+    help_text: The from address that will be used in outgoing emails
+    when: smtp_enabled=smtp_enabled_yes
+    type: text
+  - name: smtp_starttls
+    title: Encryption Type
+    default: 1
+    when: smtp_enabled=smtp_enabled_yes
+    type: select_one
+    items:
+    - name: 1
+      title: Enable STARTTLS
+      recommended: true
+      type: text
+    - name: 0
+      title: Disable STARTTLS
+      type: text
+  - name: smtp_auth_type
+    default: Login
+    when: smtp_enabled=smtp_enabled_yes
+    title: SMTP Authentication Type
+    type: select_one
+    items:
+    - name: Login
+      title: Login
+      type: text
+    - name: CRAM-MD5
+      title: CRAM-MD5
+      type: text
+    - name: Plain
+      title: Plain
+      type: text

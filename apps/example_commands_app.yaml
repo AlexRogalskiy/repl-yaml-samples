@@ -1,0 +1,36 @@
+---
+replicated_api_version: "1.3.2"
+name: My Counter App
+version: "1.0"
+release_notes: This is my killer on-prem version of my app
+properties:
+  app_url: https://{{repl ConfigOption "hostname" }}
+  logo_url: ""
+  console_title: My  App Console
+cmds:
+- name: get_my_public_ip_address
+  cmd: publicip
+  args: []
+- name: generate_random_password_32_char
+  cmd: random
+  args:
+  - "32"
+config:
+- name: App
+  title: App Configuration
+  description: Set default values for my App to Use
+  items:
+  - name: hostname
+    title: Hostname
+    type: text
+    value_cmd:
+      name: get_my_public_ip_address
+      value_at: 0
+    required: true
+  - name: admin_pw
+    title: Admin User Password
+    type: text
+    value_cmd:
+      name: generate_random_password_32_char
+      value_at: 0
+    required: true
