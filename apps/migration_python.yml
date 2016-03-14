@@ -60,7 +60,6 @@ components:
   - source: replicated
     image_name: pythonapp
     version: 1.4.2
-    cmd: '["python", "manage.py", "app", "start"]'
     env_vars:
       - name: DB_URL
         static_val: "postgresql://pythonapp:{{repl ConfigOption \"postgres_pw\"}}@{{repl HostPrivateIpAddress \"db\" \"postgres\" }}:{{repl ContainerExposedPort \"db\" \"postgres\" \"5432\"}}/pythonapp"
